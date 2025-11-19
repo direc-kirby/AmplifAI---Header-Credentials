@@ -53,7 +53,7 @@ function generateHeader() {
 
   const signature = crypto.createHmac("sha256", signingKey).update(baseString).digest("base64");
 
-  return `oauth_timestamp="${timestamp}",oauth_nonce="${nonce}",oauth_version="1.0",oauth_signature="${percentEncode(signature)}"`;
+  return `OAuth realm="3580073",oauth_consumer_key="221f4528f81eb09a7cbac9f3e6185c4a9e9146091a8d54cb005789d0b68f1a7a",oauth_token="ba9620bc4fb9aa23e74d415f55bdaacb8cca7e23abc8fde419594b127349990e",oauth_signature_method="HMAC-SHA256",oauth_timestamp="${timestamp}",oauth_nonce="${nonce}",oauth_version="1.0",oauth_signature="${percentEncode(signature)}"`;
 }
 
 app.get("/auth-header", (req, res) => {
