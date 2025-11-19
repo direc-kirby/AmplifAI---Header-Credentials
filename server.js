@@ -25,35 +25,61 @@ function percentEncode(str = "") {
 }
 
 function generateHeader() {
-  const url = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=${SCRIPT}&deploy=${DEPLOY}`;
-
+  const url = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/app/site/hosting/restlet.nl`;
+  
   const nonce = crypto.randomBytes(8).toString("hex");
   const timestamp = Math.floor(Date.now() / 1000);
 
-  const params = {
+  // OAuth parameters
+  const oauthParams = {
     oauth_consumer_key: CONSUMER_KEY,
     oauth_token: TOKEN,
     oauth_nonce: nonce,
     oauth_timestamp: timestamp,
     oauth_signature_method: "HMAC-SHA256",
-    oauth_version: "1.0"
+    oauth_version: "1.0",
   };
 
+  // Query parameters that MUST be included in signature base string
+  const queryParams = {
+    script: SCRIPT,
+    deploy: DEPLOY
+  };
+
+  // Merge & sort params
+  const allParams = { ...oauthParams, ...queryParams };
+
+  const paramString = Object.keys(allParams)
+    .sort()
+    .map(k => `${percentEncode(k)}=${percentEncode(allParams[k])}`)
+    .join("&");
+
+  // Build signature base string
   const baseString =
     HTTP_METHOD + "&" +
     percentEncode(url) + "&" +
-    percentEncode(
-      Object.keys(params)
-        .sort()
-        .map(k => `${percentEncode(k)}=${percentEncode(params[k])}`)
-        .join("&")
-    );
+    percentEncode(paramString);
 
-  const signingKey = percentEncode(CONSUMER_SECRET) + "&" + percentEncode(TOKEN_SECRET);
+  const signingKey =
+    percentEncode(CONSUMER_SECRET) + "&" + percentEncode(TOKEN_SECRET);
 
-  const signature = crypto.createHmac("sha256", signingKey).update(baseString).digest("base64");
+  const signature = crypto
+    .createHmac("sha256", signingKey)
+    .update(baseString)
+    .digest("base64");
 
-  return `OAuth realm="3580073",oauth_consumer_key="221f4528f81eb09a7cbac9f3e6185c4a9e9146091a8d54cb005789d0b68f1a7a",oauth_token="ba9620bc4fb9aa23e74d415f55bdaacb8cca7e23abc8fde419594b127349990e",oauth_signature_method="HMAC-SHA256",oauth_timestamp="${timestamp}",oauth_nonce="${nonce}",oauth_version="1.0",oauth_signature="${percentEncode(signature)}"`;
+  const header =
+    'OAuth ' +
+    `realm="${ACCOUNT_ID}",` +
+    `oauth_consumer_key="${percentEncode(CONSUMER_KEY)}",` +
+    `oauth_token="${percentEncode(TOKEN)}",` +
+    `oauth_signature_method="HMAC-SHA256",` +
+    `oauth_timestamp="${timestamp}",` +
+    `oauth_nonce="${nonce}",` +
+    `oauth_version="1.0",` +
+    `oauth_signature="${percentEncode(signature)}"`;
+
+  return header;
 }
 
 app.get("/auth-header", (req, res) => {
