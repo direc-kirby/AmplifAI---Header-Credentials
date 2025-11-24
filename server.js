@@ -13,7 +13,8 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET;
 const ACCOUNT_ID = process.env.ACCOUNT_ID;
 const SCRIPT = 898;
 const DEPLOY = 1;
-const HTTP_METHOD = "GET";
+const HTTP_METHOD_GET = "GET";
+const HTTP_METHOD_POST = "POST";
 
 function percentEncode(str = "") {
   return encodeURIComponent(String(str))
@@ -24,7 +25,7 @@ function percentEncode(str = "") {
     .replace(/\*/g, "%2A");
 }
 
-function generateHeader() {
+function generateHeader(method) {
   const url = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/app/site/hosting/restlet.nl`;
   
   const nonce = crypto.randomBytes(8).toString("hex");
@@ -56,7 +57,7 @@ function generateHeader() {
 
   // Build signature base string
   const baseString =
-    HTTP_METHOD + "&" +
+    method === 'POST' ? HTTP_METHOD_POST : HTTP_METHOD_GET + "&" +
     percentEncode(url) + "&" +
     percentEncode(paramString);
 
@@ -82,8 +83,14 @@ function generateHeader() {
   return header;
 }
 
-app.get("/auth-header", (req, res) => {
-  const header = generateHeader();
+app.get("/auth-header-get", (req, res) => {
+  const header = generateHeader('GET');
+  res.setHeader("Content-Type", "text/plain");
+  res.send(header);
+});
+
+app.get("/auth-header-post", (req, res) => {
+  const header = generateHeader('POST');
   res.setHeader("Content-Type", "text/plain");
   res.send(header);
 });
