@@ -55,9 +55,11 @@ function generateHeader(method) {
     .map(k => `${percentEncode(k)}=${percentEncode(allParams[k])}`)
     .join("&");
 
+  const httpMethod = method === "POST" ? HTTP_METHOD_POST : HTTP_METHOD_GET;
+
   // Build signature base string
   const baseString =
-    method === 'POST' ? HTTP_METHOD_POST : HTTP_METHOD_GET + "&" +
+    httpMethod + "&" +
     percentEncode(url) + "&" +
     percentEncode(paramString);
 
